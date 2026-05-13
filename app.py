@@ -47,8 +47,9 @@ def fetch_historical_data(tickers, index_tickers, period="1y"):
     if isinstance(hist_data, pd.Series):
         hist_data = pd.DataFrame(hist_data, columns=all_tickers)
         
-    hist_data.fillna(method='ffill', inplace=True)
-    hist_data.fillna(method='bfill', inplace=True)
+    # [수정됨] 최신 Pandas 버전(2.1.0 이상) 문법 적용 (method='ffill' 오류 해결)
+    hist_data = hist_data.ffill()
+    hist_data = hist_data.bfill()
     return hist_data
 
 # -----------------------------------------------------------------------------
