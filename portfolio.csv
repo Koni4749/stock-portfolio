@@ -1,7 +1,16 @@
 종목명,티커,매수단가,수량,섹터,매수일자
-삼성전자,005930.KS,72000,150,IT/반도체,2023-08-15
-에코프로,086520.KQ,100000,50,2차전지,2023-11-20
-Apple,AAPL,170.5,30,IT/기기,2023-05-10
-Microsoft,MSFT,320.0,20,SW/클라우드,2023-06-22
-Realty Income,O,55.0,100,리츠/부동산,2023-09-05
-#테스트용 더미데이터
+Sandisk Corp/DE,SNDK,152,39,IT/하드웨어,2023-06-10
+Intel Corp,INTC,48,419,IT/반도체,2024-01-10
+NVIDIA Corp,NVDA,450,182,IT/반도체,2023-11-20
+Micron Technology Inc,MU,85,48,IT/반도체,2023-03-22
+Alphabet Inc,GOOGL,130,86,IT/소프트웨어,2023-08-05
+ARM Holdings PLC,ARM,65,145,IT/반도체,2024-01-10
+Circle Internet Group Inc,CRCL,238,192,금융/크립토,2024-01-10
+Bloom Energy Corp,BE,15,85,에너지,2023-03-22
+Coinbase Global Inc,COIN,152,109,금융/크립토,2023-08-05
+Seagate Technology Holdings PLC,STX,70,27,IT/하드웨어,2023-11-20
+Western Digital Corp,WDC,55,43,IT/하드웨어,2023-01-15
+Lumentum Holdings Inc,LITE,45,21,IT/하드웨어,2023-08-05
+Corning Inc,GLW,32,106,IT/하드웨어,2023-03-22
+Advanced Micro Devices Inc,AMD,120,45,IT/반도체,2024-01-10
+Tesla Inc,TSLA,195,46,자동차/모빌리티,2023-11-20
