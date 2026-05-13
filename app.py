@@ -83,6 +83,11 @@ if df is not None:
         st.error(f"CSV 파일에 다음 필수 컬럼이 포함되어야 합니다: {', '.join(required_columns)}")
         st.stop()
 
+    # --- 에러 방지 처리 (TypeError 해결) ---
+    # 티커 컬럼이 비어있는 행(NaN) 제거 및 문자열로 강제 변환
+    df = df.dropna(subset=['티커'])
+    df['티커'] = df['티커'].astype(str)
+
     with st.spinner('실시간 금융 데이터를 불러오는 중입니다... (약 5~10초 소요)'):
         # 현재 가격 및 환율 데이터 가져오기
         tickers = df['티커'].unique().tolist()
@@ -90,7 +95,9 @@ if df is not None:
         
         # 데이터프레임에 계산된 지표 추가
         df['현재가'] = df['티커'].map(current_prices)
-        df['국가'] = df['티커'].apply(lambda x: 'KR' if '.KS' in x or '.KQ' in x else 'US')
+        
+        # 명시적으로 str(x)를 사용하여 숫자/문자 혼용 시 발생하는 오류 원천 차단
+        df['국가'] = df['티커'].apply(lambda x: 'KR' if '.KS' in str(x) or '.KQ' in str(x) else 'US')
         
         # 평가금액 계산
         df['매수금액'] = df.apply(lambda row: row['매수단가'] * row['수량'] * (current_fx if row['국가'] == 'US' else 1), axis=1)
