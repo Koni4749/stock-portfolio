@@ -47,7 +47,7 @@ def fetch_historical_data(tickers, index_tickers, period="1y"):
     if isinstance(hist_data, pd.Series):
         hist_data = pd.DataFrame(hist_data, columns=all_tickers)
         
-    # [수정됨] 최신 Pandas 버전(2.1.0 이상) 문법 적용 (method='ffill' 오류 해결)
+    # 최신 Pandas 버전(2.1.0 이상) 문법 적용
     hist_data = hist_data.ffill()
     hist_data = hist_data.bfill()
     return hist_data
@@ -169,10 +169,17 @@ if df is not None:
                                  title='매수금액 vs 현재 평가금액')
         st.plotly_chart(fig_grouped_bar, use_container_width=True)
 
-    fig_bubble = px.scatter(df, x='비중(%)', y='수익률(%)', size='평가금액', color='섹터',
-                            hover_name='종목명', text='종목명', title='비중 vs 수익률 버블 차트 (버블 크기: 평가금액)',
+    # --- [수정됨] 버블 차트 X축을 '종목명'으로 변경 및 비중순 정렬 ---
+    # 보기 좋게 비중(평가금액)이 큰 순서대로 정렬하여 왼쪽부터 배치합니다.
+    df_bubble = df.sort_values(by='평가금액', ascending=False)
+    
+    fig_bubble = px.scatter(df_bubble, x='종목명', y='수익률(%)', size='평가금액', color='섹터',
+                            hover_name='종목명', text='종목명', 
+                            title='종목별 수익률 버블 차트 (버블 크기: 비중)',
                             size_max=60)
+    # 가독성을 위해 텍스트 위치 조정 (버블 위쪽)
     fig_bubble.update_traces(textposition='top center')
+    # 기준선(0%) 추가
     fig_bubble.add_hline(y=0, line_dash="dash", line_color="gray")
     st.plotly_chart(fig_bubble, use_container_width=True)
 
