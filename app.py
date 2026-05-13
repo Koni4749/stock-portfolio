@@ -87,7 +87,6 @@ if df is not None:
         df['매수금액'] = df.apply(lambda row: row['매수단가'] * row['수량'] * (current_fx if row['국가'] == 'US' else 1), axis=1).round(0)
         df['평가금액'] = df.apply(lambda row: row['현재가'] * row['수량'] * (current_fx if row['국가'] == 'US' else 1), axis=1).round(0)
         
-        # [수정됨] 데이터프레임 자체에서 소수점 둘째 자리로 원천 차단
         df['수익률(%)'] = (((df['평가금액'] - df['매수금액']) / df['매수금액']) * 100).round(2)
         total_evaluation = df['평가금액'].sum()
         df['비중(%)'] = ((df['평가금액'] / total_evaluation) * 100).round(2)
@@ -145,7 +144,6 @@ if df is not None:
         fig_bar_ret = px.bar(df_sorted, x='수익률(%)', y='종목명', orientation='h',
                              title='종목별 수익률 (%)', text='수익률(%)')
         
-        # [수정됨] 호버 툴팁(Hover) 소수점 2자리 강제 고정
         fig_bar_ret.update_traces(marker_color=df_sorted['색상'], texttemplate='%{text:.2f}%', textposition='outside', cliponaxis=False,
                                   hovertemplate='<b>%{y}</b><br>수익률: %{x:.2f}%<extra></extra>')
         x_min = df_sorted['수익률(%)'].min()
@@ -155,13 +153,14 @@ if df is not None:
         st.plotly_chart(fig_bar_ret, use_container_width=True)
 
     with row2_col2:
-        # [수정됨] id_vars에 '섹터' 추가
         df_melted = df.melt(id_vars=['종목명', '섹터'], value_vars=['매수금액', '평가금액'], 
                             var_name='구분', value_name='금액')
-        # [수정됨] color를 '섹터'로 지정하여 버블 차트와 색상 일치, pattern_shape로 매수/평가금액 구분
-        fig_grouped_bar = px.bar(df_melted, x='종목명', y='금액', color='섹터', pattern_shape='구분', barmode='group',
-                                 title='매수금액 vs 평가금액 (패턴: 매수/평가 구분)')
+        # [수정됨] 범례(Legend)를 합치고 막대를 두껍게 만들기 위해 색상 기준을 '구분(매수/평가)'으로 원상복구
+        fig_grouped_bar = px.bar(df_melted, x='종목명', y='금액', color='구분', barmode='group',
+                                 title='매수금액 vs 평가금액')
         fig_grouped_bar.update_traces(hovertemplate='<b>%{x}</b><br>금액: ₩%{y:,.0f}<extra></extra>')
+        # 범례 타이틀 깔끔하게 수정
+        fig_grouped_bar.update_layout(legend_title_text='금액 구분')
         st.plotly_chart(fig_grouped_bar, use_container_width=True)
 
     df_bubble = df.sort_values(by='평가금액', ascending=False)
@@ -237,7 +236,6 @@ if df is not None:
         fig_line = px.line(cum_return_df * 100, 
                            title='내 포트폴리오 vs 주요 지수 누적 수익률 비교 (%)',
                            labels={'value': '누적 수익률 (%)', 'Date': '날짜', 'variable': '자산군'})
-        # [수정됨] 선 차트 툴팁 소수점 2자리 제한
         fig_line.update_traces(hovertemplate='%{y:.2f}%')
         fig_line.update_traces(patch={"line": {"width": 4}}, selector={"name": "내 포트폴리오"})
         st.plotly_chart(fig_line, use_container_width=True)
@@ -245,7 +243,6 @@ if df is not None:
     with tab2:
         fig_mdd_custom = go.Figure()
         
-        # [수정됨] MDD 차트 툴팁 소수점 2자리 제한
         fig_mdd_custom.add_trace(go.Scatter(x=drawdown_df.index, y=drawdown_df['내 포트폴리오']*100,
                                             fill='tozeroy', mode='lines', name='내 포트폴리오',
                                             line=dict(width=3, color='rgba(255, 0, 0, 0.7)'),
