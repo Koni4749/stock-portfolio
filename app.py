@@ -63,15 +63,16 @@ df = None
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
-    st.sidebar.success("업로드된 파일을 적용했습니다.")
+    # [수정됨] 잠깐 떴다가 사라지는 팝업 알림(Toast) 적용
+    st.toast("업로드된 파일을 적용했습니다.", icon="📁")
 elif os.path.exists(default_csv_path):
     df = pd.read_csv(default_csv_path)
-    st.sidebar.success("기본 포트폴리오(portfolio.csv)를 자동으로 불러왔습니다.")
+    # [수정됨] 문구 변경 및 자동으로 사라지는 알림 적용
+    st.toast("견본 포트폴리오입니다.", icon="✅")
 else:
     st.error("오류: 깃허브 저장소에서 'portfolio.csv' 파일을 찾을 수 없습니다. 파일 이름과 위치를 확인해주세요.")
 
 if df is not None:
-    # [수정됨] 불필요해진 '매수일자'를 필수 컬럼 검사에서 제외
     required_columns = ['종목명', '티커', '매수단가', '수량', '섹터']
     if not all(col in df.columns for col in required_columns):
         st.error(f"CSV 파일에 다음 필수 컬럼이 포함되어야 합니다: {', '.join(required_columns)}")
@@ -87,8 +88,9 @@ if df is not None:
         df['현재가'] = df['티커'].map(current_prices)
         df['국가'] = df['티커'].apply(lambda x: 'KR' if '.KS' in str(x) or '.KQ' in str(x) else 'US')
         
-        df['매수금액'] = df.apply(lambda row: row['매수단가'] * row['수량'] * (current_fx if row['국가'] == 'US' else 1), axis=1)
-        df['평가금액'] = df.apply(lambda row: row['현재가'] * row['수량'] * (current_fx if row['국가'] == 'US' else 1), axis=1)
+        # [수정됨] 환율 계산 후 발생하는 무한 소수점을 방지하기 위해 반올림(round) 처리
+        df['매수금액'] = df.apply(lambda row: row['매수단가'] * row['수량'] * (current_fx if row['국가'] == 'US' else 1), axis=1).round(0)
+        df['평가금액'] = df.apply(lambda row: row['현재가'] * row['수량'] * (current_fx if row['국가'] == 'US' else 1), axis=1).round(0)
         
         df['수익률(%)'] = ((df['평가금액'] - df['매수금액']) / df['매수금액']) * 100
         total_evaluation = df['평가금액'].sum()
@@ -129,6 +131,8 @@ if df is not None:
     with row1_col3:
         fig_treemap = px.treemap(df, path=['섹터', '종목명'], values='평가금액', title='섹터 및 종목별 계층 비중')
         fig_treemap.update_layout(margin=dict(t=50, l=25, r=25, b=25))
+        # [수정됨] 툴팁(Hover) 소수점 깔끔하게 정리
+        fig_treemap.update_traces(hovertemplate='<b>%{label}</b><br>평가금액: ₩%{value:,.0f}')
         st.plotly_chart(fig_treemap, use_container_width=True)
 
     st.markdown("---")
@@ -145,7 +149,13 @@ if df is not None:
         
         fig_bar_ret = px.bar(df_sorted, x='수익률(%)', y='종목명', orientation='h',
                              title='종목별 수익률 (%)', text='수익률(%)')
-        fig_bar_ret.update_traces(marker_color=df_sorted['색상'], texttemplate='%{text:.2f}%', textposition='outside')
+        
+        # [수정됨] 글씨 잘림 방지를 위해 cliponaxis=False 설정 및 X축 여유 공간 확보
+        fig_bar_ret.update_traces(marker_color=df_sorted['색상'], texttemplate='%{text:.2f}%', textposition='outside', cliponaxis=False)
+        x_min = df_sorted['수익률(%)'].min()
+        x_max = df_sorted['수익률(%)'].max()
+        x_padding = (x_max - x_min) * 0.2  # 20% 여백 추가
+        fig_bar_ret.update_xaxes(range=[x_min - x_padding, x_max + x_padding])
         st.plotly_chart(fig_bar_ret, use_container_width=True)
 
     with row2_col2:
@@ -153,8 +163,11 @@ if df is not None:
                             var_name='구분', value_name='금액')
         fig_grouped_bar = px.bar(df_melted, x='종목명', y='금액', color='구분', barmode='group',
                                  title='매수금액 vs 현재 평가금액')
+        # [수정됨] 그룹 막대 차트 호버 툴팁 깔끔하게 콤마+정수 처리
+        fig_grouped_bar.update_traces(hovertemplate='%{x}<br>금액: ₩%{y:,.0f}')
         st.plotly_chart(fig_grouped_bar, use_container_width=True)
 
+    # --- 버블 차트 ---
     df_bubble = df.sort_values(by='평가금액', ascending=False)
     fig_bubble = px.scatter(df_bubble, x='종목명', y='수익률(%)', size='평가금액', color='섹터',
                             hover_name='종목명', text='종목명', 
@@ -167,7 +180,13 @@ if df is not None:
                             title='종목별 수익률 버블 차트 (버블 크기: 비중)',
                             size_max=60)
     
-    fig_bubble.update_traces(textposition='top center')
+    # [수정됨] 큰 버블이나 텍스트가 위로 잘리지 않도록 여백 확보 및 cliponaxis 해제
+    fig_bubble.update_traces(textposition='top center', cliponaxis=False)
+    y_min = df_bubble['수익률(%)'].min()
+    y_max = df_bubble['수익률(%)'].max()
+    y_padding = (y_max - y_min) * 0.25 if (y_max - y_min) != 0 else 10 # 25% 상하 여백 추가
+    fig_bubble.update_yaxes(range=[y_min - y_padding, y_max + y_padding])
+    
     fig_bubble.add_hline(y=0, line_dash="dash", line_color="gray")
     st.plotly_chart(fig_bubble, use_container_width=True)
 
