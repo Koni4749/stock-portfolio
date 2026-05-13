@@ -1,14 +1,16 @@
 종목명,티커,매수단가,수량,섹터
 Sandisk Corp/DE,SNDK,473.8,4,IT/하드웨어
 Intel Corp,INTC,46.1,42,IT/반도체
-NVIDIA Corp,NVDA,188.8,18,IT/반도체
 Micron Technology Inc,MU,399.7,5,IT/반도체
 Alphabet Inc,GOOGL,175.0,9,IT/소프트웨어
 ARM Holdings PLC,ARM,140.0,15,IT/반도체
-Circle Internet Group Inc,CRCL,121.2,19,금융/크립토
+Circle Internet Group Inc,CRCL,105.0,14,금융/크립토
 Coinbase Global Inc,COIN,250.0,11,금융/크립토
 Advanced Micro Devices Inc,AMD,170.0,5,IT/반도체
-Tesla Inc,TSLA,410.6,5,자동차/모빌리티
 삼성전자,005930.KS,128000,14,IT/반도체
 SK하이닉스,000660.KS,750000,2,IT/반도체
-UnitedHealth Group,UNH,270,8,헬스케어
+UnitedHealth Group,UNH,270.0,8,헬스케어
+Roblox Corp,RBLX,56.09,55,게임/메타버스
+PepsiCo Inc,PEP,128.0,18,필수소비재
+Target Corp,TGT,95.0,24,경기소비재
+Microsoft Corp,MSFT,400.0,10,IT/소프트웨어
