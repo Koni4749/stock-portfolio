@@ -57,50 +57,36 @@ def fetch_historical_data(tickers, index_tickers, period="1y"):
 # -----------------------------------------------------------------------------
 st.sidebar.header("📁 데이터 소스 설정")
 
-# 깃허브에 올라간 기본 파일 경로
 default_csv_path = "portfolio.csv"
-
-# 사용자가 원하면 다른 파일을 테스트해볼 수 있도록 업로더는 남겨둠 (선택사항)
 uploaded_file = st.sidebar.file_uploader("다른 포트폴리오 테스트 (선택사항)", type=["csv"])
 
 df = None
 
 if uploaded_file is not None:
-    # 1. 사용자가 직접 업로드한 파일이 우선
     df = pd.read_csv(uploaded_file)
     st.sidebar.success("업로드된 파일을 적용했습니다.")
 elif os.path.exists(default_csv_path):
-    # 2. 업로드한 파일이 없으면 깃허브에 있는 portfolio.csv 자동 로드
     df = pd.read_csv(default_csv_path)
     st.sidebar.success("기본 포트폴리오(portfolio.csv)를 자동으로 불러왔습니다.")
 else:
-    # 3. 파일이 둘 다 없는 경우 경고 메시지
     st.error("오류: 깃허브 저장소에서 'portfolio.csv' 파일을 찾을 수 없습니다. 파일 이름과 위치를 확인해주세요.")
 
 if df is not None:
-    # 필수 컬럼 체크
     required_columns = ['종목명', '티커', '매수단가', '수량', '섹터', '매수일자']
     if not all(col in df.columns for col in required_columns):
         st.error(f"CSV 파일에 다음 필수 컬럼이 포함되어야 합니다: {', '.join(required_columns)}")
         st.stop()
 
-    # --- 에러 방지 처리 (TypeError 해결) ---
-    # 티커 컬럼이 비어있는 행(NaN) 제거 및 문자열로 강제 변환
     df = df.dropna(subset=['티커'])
     df['티커'] = df['티커'].astype(str)
 
     with st.spinner('실시간 금융 데이터를 불러오는 중입니다... (약 5~10초 소요)'):
-        # 현재 가격 및 환율 데이터 가져오기
         tickers = df['티커'].unique().tolist()
         current_prices, current_fx = fetch_current_prices_and_fx(tickers)
         
-        # 데이터프레임에 계산된 지표 추가
         df['현재가'] = df['티커'].map(current_prices)
-        
-        # 명시적으로 str(x)를 사용하여 숫자/문자 혼용 시 발생하는 오류 원천 차단
         df['국가'] = df['티커'].apply(lambda x: 'KR' if '.KS' in str(x) or '.KQ' in str(x) else 'US')
         
-        # 평가금액 계산
         df['매수금액'] = df.apply(lambda row: row['매수단가'] * row['수량'] * (current_fx if row['국가'] == 'US' else 1), axis=1)
         df['평가금액'] = df.apply(lambda row: row['현재가'] * row['수량'] * (current_fx if row['국가'] == 'US' else 1), axis=1)
         
@@ -169,17 +155,21 @@ if df is not None:
                                  title='매수금액 vs 현재 평가금액')
         st.plotly_chart(fig_grouped_bar, use_container_width=True)
 
-    # --- [수정됨] 버블 차트 X축을 '종목명'으로 변경 및 비중순 정렬 ---
-    # 보기 좋게 비중(평가금액)이 큰 순서대로 정렬하여 왼쪽부터 배치합니다.
+    # --- [수정됨] 버블 차트 툴팁(Hover)에 비중(%) 추가 ---
     df_bubble = df.sort_values(by='평가금액', ascending=False)
     
     fig_bubble = px.scatter(df_bubble, x='종목명', y='수익률(%)', size='평가금액', color='섹터',
                             hover_name='종목명', text='종목명', 
+                            hover_data={
+                                '종목명': False,      # 이미 타이틀로 뜨므로 중복 제거
+                                '수익률(%)': ':.2f',  # 소수점 2자리
+                                '비중(%)': ':.2f',    # 소수점 2자리
+                                '평가금액': ':,.0f'    # 천단위 콤마
+                            },
                             title='종목별 수익률 버블 차트 (버블 크기: 비중)',
                             size_max=60)
-    # 가독성을 위해 텍스트 위치 조정 (버블 위쪽)
+    
     fig_bubble.update_traces(textposition='top center')
-    # 기준선(0%) 추가
     fig_bubble.add_hline(y=0, line_dash="dash", line_color="gray")
     st.plotly_chart(fig_bubble, use_container_width=True)
 
